@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Kirmesteam Großenritte - Web App 2026</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,9 +46,35 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        .app-shell {
+            width: 100%;
+            max-width: 28rem; /* Handy */
+            height: 100dvh;
+            max-height: 100dvh;
+        }
+        @media (min-width: 768px) {
+            .app-shell {
+                max-width: 48rem; /* Tablet / kleiner PC */
+                height: min(920px, calc(100dvh - 2rem));
+                max-height: calc(100dvh - 2rem);
+            }
+        }
+        @media (min-width: 1024px) {
+            .app-shell {
+                max-width: 72rem; /* Desktop */
+            }
+        }
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .app-nav {
+                padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+            }
+            .app-header {
+                padding-top: max(1rem, env(safe-area-inset-top));
+            }
+        }
     </style>
 </head>
-<body class="flex justify-center min-h-screen items-center p-0 sm:p-4 md:p-6 bg-slate-950">
+<body class="flex justify-center min-h-[100dvh] items-stretch sm:items-center p-0 sm:p-4 md:p-6 bg-slate-950">
 
     <!-- Toast Notification Overlay -->
     <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
@@ -78,23 +104,23 @@
         </div>
     </div>
 
-    <!-- Main Mobile Shell Device Container -->
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-screen sm:h-[840px] relative">
+    <!-- Responsive App Shell (Handy + PC) -->
+    <div class="app-shell bg-slate-900 border-0 sm:border border-slate-800 rounded-none sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col relative w-full">
         
         <!-- Top App Bar Header -->
-        <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-30 flex items-center justify-between">
+        <header class="app-header bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 sm:p-4 sticky top-0 z-30 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-tent"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-sm tracking-tight text-white flex items-center gap-1.5">
-                        Kirmesteam Großenritte
-                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    <h1 class="font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-1.5">
+                        <span class="truncate max-w-[46vw] sm:max-w-none">Kirmesteam Großenritte</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                             LIVE
                         </span>
                     </h1>
-                    <p class="text-[10px] text-slate-400">Das digitale Festzelt-Hauptquartier</p>
+                    <p class="text-[10px] text-slate-400 truncate">Das digitale Festzelt-Hauptquartier</p>
                 </div>
             </div>
 
@@ -111,7 +137,10 @@
                         <i class="fa-solid fa-right-to-bracket"></i> Anmelden
                     </button>
                     <div id="loggedInControls" class="hidden items-center gap-1.5">
-                        <span id="loggedInName" class="hidden sm:inline text-[10px] text-slate-400 max-w-[110px] truncate" title=""></span>
+                        <span id="loggedInName" class="hidden md:inline text-[10px] text-slate-400 max-w-[140px] truncate" title=""></span>
+                        <button onclick="openChangePasswordModal()" class="p-2 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 rounded-lg transition" title="Passwort ändern">
+                            <i class="fa-solid fa-key text-[11px]"></i>
+                        </button>
                         <button onclick="logout()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-[11px] font-semibold rounded-lg transition flex items-center gap-1">
                             <i class="fa-solid fa-right-from-bracket"></i> Abmelden
                         </button>
@@ -229,6 +258,44 @@
             </div>
         </div>
 
+        <!-- Change own password (Mitglieder + Admin) -->
+        <div id="changePasswordModal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                        <i class="fa-solid fa-key"></i> Passwort ändern
+                    </h3>
+                    <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <p class="text-[11px] text-slate-400">Angemeldet als <span id="changePwUserLabel" class="text-slate-200 font-medium"></span></p>
+
+                <div class="space-y-1.5">
+                    <label for="changePwCurrent" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktuelles Passwort</label>
+                    <input type="password" id="changePwCurrent" autocomplete="current-password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500/50">
+                </div>
+                <div class="space-y-1.5">
+                    <label for="changePwNew" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neues Passwort</label>
+                    <input type="password" id="changePwNew" autocomplete="new-password" minlength="6" placeholder="mind. 6 Zeichen" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
+                </div>
+                <div class="space-y-1.5">
+                    <label for="changePwConfirm" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Neues Passwort wiederholen</label>
+                    <input type="password" id="changePwConfirm" autocomplete="new-password" onkeydown="if(event.key==='Enter'){event.preventDefault();submitChangePassword();}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500/50">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button id="changePwSubmitBtn" onclick="submitChangePassword()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Passwort speichern
+                    </button>
+                    <button onclick="closeChangePasswordModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
+                        Abbrechen
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Generated password info (Admin only) -->
         <div id="passwordInfoModal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
@@ -309,7 +376,7 @@
         </div>
 
         <!-- MAIN SCROLLABLE CONTENT AREA -->
-        <main class="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar">
+        <main class="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 space-y-4 hide-scrollbar min-h-0">
 
             <!-- TAB 1: HOME & LIVE-STREAM -->
             <div id="tab-home" class="tab-content space-y-4">
@@ -384,7 +451,7 @@
                     <span class="text-[11px] text-slate-400">4 Festtage</span>
                 </div>
 
-                <div id="programList" class="space-y-2.5">
+                <div id="programList" class="space-y-2.5 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                     <!-- Populated dynamically via JS -->
                 </div>
             </div>
@@ -404,7 +471,7 @@
                     <span class="text-[11px] text-slate-500" id="shiftStatusCount">0 Schichten offen</span>
                 </div>
 
-                <div id="shiftList" class="space-y-2.5">
+                <div id="shiftList" class="space-y-2.5 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
                     <!-- Populated dynamically via JS -->
                 </div>
             </div>
@@ -434,7 +501,7 @@
                 <div id="photoFolderBar" class="flex gap-2 overflow-x-auto hide-scrollbar pb-0.5"></div>
 
                 <!-- Photo Gallery Grid -->
-                <div id="photoGrid" class="grid grid-cols-2 gap-2.5">
+                <div id="photoGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                     <!-- Populated via JS -->
                 </div>
             </div>
@@ -467,6 +534,8 @@
                     </h2>
                     <p class="text-[11px] text-purple-200/80 mt-0.5">Änderungen hier aktualisieren sofort die App für alle Nutzer!</p>
                 </div>
+
+                <div class="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0 lg:items-start">
 
                 <!-- User & Rights Management -->
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
@@ -544,38 +613,40 @@
                     </div>
                 </div>
 
+                </div>
+
             </div>
 
         </main>
 
         <!-- BOTTOM NAVIGATION TAB BAR -->
-        <nav class="bg-slate-900/95 backdrop-blur border-t border-slate-800 px-2 py-2 flex items-center justify-around z-30">
-            <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-blue-500">
+        <nav class="app-nav bg-slate-900/95 backdrop-blur border-t border-slate-800 px-1 sm:px-2 py-2 flex items-center justify-around z-30 shrink-0 overflow-x-auto hide-scrollbar">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-blue-500 shrink-0">
                 <i class="fa-solid fa-house text-base"></i>
                 <span class="text-[10px] font-medium">Start</span>
             </button>
 
-            <button onclick="switchTab('programm')" id="nav-programm" class="nav-btn flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200">
+            <button onclick="switchTab('programm')" id="nav-programm" class="nav-btn flex flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 shrink-0">
                 <i class="fa-solid fa-calendar-days text-base"></i>
                 <span class="text-[10px] font-medium">Programm</span>
             </button>
 
-            <button onclick="switchTab('schichtplan')" id="nav-schichtplan" class="nav-btn hidden flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200">
+            <button onclick="switchTab('schichtplan')" id="nav-schichtplan" class="nav-btn hidden flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 shrink-0">
                 <i class="fa-solid fa-clipboard-list text-base"></i>
                 <span class="text-[10px] font-medium">Schichten</span>
             </button>
 
-            <button onclick="switchTab('fotos')" id="nav-fotos" class="nav-btn flex flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200">
+            <button onclick="switchTab('fotos')" id="nav-fotos" class="nav-btn flex flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 shrink-0">
                 <i class="fa-solid fa-images text-base"></i>
                 <span class="text-[10px] font-medium">Fotos</span>
             </button>
 
-            <button onclick="switchTab('umfragen')" id="nav-umfragen" class="nav-btn hidden flex-col items-center gap-1 px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200">
+            <button onclick="switchTab('umfragen')" id="nav-umfragen" class="nav-btn hidden flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-slate-400 hover:text-slate-200 shrink-0">
                 <i class="fa-solid fa-square-poll-vertical text-base"></i>
                 <span class="text-[10px] font-medium">Umfrage</span>
             </button>
 
-            <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn hidden flex-col items-center gap-1 px-3 py-1 rounded-xl text-purple-400 hover:text-purple-300">
+            <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn hidden flex-col items-center gap-1 px-2 sm:px-3 py-1 rounded-xl text-purple-400 hover:text-purple-300 shrink-0">
                 <i class="fa-solid fa-sliders text-base"></i>
                 <span class="text-[10px] font-medium">Admin</span>
             </button>
@@ -1324,9 +1395,108 @@
             showToast(user.role === 'admin' ? 'Als Vorstand angemeldet.' : 'Als Team-Mitglied angemeldet.', 'success');
         }
 
+        function openChangePasswordModal() {
+            if (!currentUserName || currentRole === 'gast') {
+                showToast('Bitte zuerst anmelden.', 'error');
+                return;
+            }
+            const modal = document.getElementById('changePasswordModal');
+            const label = document.getElementById('changePwUserLabel');
+            const cur = document.getElementById('changePwCurrent');
+            const neu = document.getElementById('changePwNew');
+            const conf = document.getElementById('changePwConfirm');
+            if (label) label.textContent = currentUserName;
+            if (cur) cur.value = '';
+            if (neu) neu.value = '';
+            if (conf) conf.value = '';
+            if (modal) modal.classList.remove('hidden');
+            setTimeout(() => cur?.focus(), 50);
+        }
+
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function submitChangePassword() {
+            if (!currentUserName || currentRole === 'gast') {
+                showToast('Bitte zuerst anmelden.', 'error');
+                return;
+            }
+
+            const currentPw = String(document.getElementById('changePwCurrent')?.value || '');
+            const newPw = String(document.getElementById('changePwNew')?.value || '');
+            const confirmPw = String(document.getElementById('changePwConfirm')?.value || '');
+            const btn = document.getElementById('changePwSubmitBtn');
+
+            if (!currentPw) {
+                showToast('Bitte aktuelles Passwort eingeben.', 'error');
+                return;
+            }
+            if (newPw.length < 6) {
+                showToast('Neues Passwort muss mindestens 6 Zeichen haben.', 'error');
+                return;
+            }
+            if (newPw !== confirmPw) {
+                showToast('Neue Passwörter stimmen nicht überein.', 'error');
+                return;
+            }
+            if (newPw === currentPw) {
+                showToast('Das neue Passwort muss sich vom alten unterscheiden.', 'error');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Speichern…';
+            }
+
+            try {
+                const user = await fetchUserFromCloud(currentUserName);
+                if (!user) {
+                    showToast('Konto nicht gefunden.', 'error');
+                    logout({ silent: true });
+                    return;
+                }
+                if (!user.password || user.password !== currentPw) {
+                    showToast('Aktuelles Passwort ist falsch.', 'error');
+                    return;
+                }
+
+                if (db) {
+                    await db.collection('members').doc(userDocId(user.name)).set({
+                        name: user.name,
+                        role: user.role,
+                        password: newPw
+                    }, { merge: true });
+                } else {
+                    const local = findUserByName(user.name);
+                    if (local) local.password = newPw;
+                    saveStateToCloud();
+                }
+
+                // Admin-Liste lokal aktualisieren, falls geladen
+                const inList = findUserByName(user.name);
+                if (inList) inList.password = newPw;
+                if (currentRole === 'admin') renderUsers();
+
+                closeChangePasswordModal();
+                showToast('Passwort wurde geändert.', 'success');
+            } catch (e) {
+                console.error(e);
+                showToast('Passwort konnte nicht gespeichert werden.', 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Passwort speichern';
+                }
+            }
+        }
+
         function logout(opts = {}) {
             unsubscribeUsers();
             currentUserName = null;
+            closeChangePasswordModal();
             applyRoleUI('gast', { silent: true });
             localStorage.removeItem(SESSION_KEY);
             updateAuthHeaderUI();

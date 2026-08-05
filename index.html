@@ -111,7 +111,7 @@
                         <i class="fa-solid fa-right-to-bracket"></i> Anmelden
                     </button>
                     <div id="loggedInControls" class="hidden items-center gap-1.5">
-                        <span id="loggedInEmail" class="hidden sm:inline text-[10px] text-slate-400 max-w-[110px] truncate" title=""></span>
+                        <span id="loggedInName" class="hidden sm:inline text-[10px] text-slate-400 max-w-[110px] truncate" title=""></span>
                         <button onclick="logout()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-[11px] font-semibold rounded-lg transition flex items-center gap-1">
                             <i class="fa-solid fa-right-from-bracket"></i> Abmelden
                         </button>
@@ -205,21 +205,21 @@
                 </div>
 
                 <p class="text-[11px] text-slate-400 leading-relaxed">
-                    Melde dich mit der freigeschalteten E-Mail und dem Passwort an, das dir der Vorstand geschickt hat.
+                    Melde dich mit deinem Namen und dem Passwort an, das dir der Vorstand geschickt hat.
                 </p>
 
                 <div class="space-y-1.5">
-                    <label for="loginEmailInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">E-Mail</label>
-                    <input type="email" id="loginEmailInput" autocomplete="username" placeholder="helfer@kirmesteam-grossenritte.de" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
+                    <label for="loginNameInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name</label>
+                    <input type="text" id="loginNameInput" autocomplete="username" placeholder="z. B. Klaus Helfer" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
                 </div>
 
                 <div class="space-y-1.5">
                     <label for="loginPasswordInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Passwort</label>
-                    <input type="password" id="loginPasswordInput" autocomplete="current-password" placeholder="Passwort vom Vorstand" onkeydown="if(event.key==='Enter'){event.preventDefault();loginWithEmail();}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
+                    <input type="password" id="loginPasswordInput" autocomplete="current-password" placeholder="Passwort vom Vorstand" onkeydown="if(event.key==='Enter'){event.preventDefault();loginWithCredentials();}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <button onclick="loginWithEmail()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                    <button onclick="loginWithCredentials()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
                         <i class="fa-solid fa-right-to-bracket"></i> Einloggen
                     </button>
                     <button onclick="closeLoginModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
@@ -243,8 +243,8 @@
                 <p class="text-[11px] text-slate-400">Nur für den Vorstand sichtbar. Diese Daten an die Person schicken:</p>
                 <div class="rounded-xl bg-slate-950 border border-slate-800 p-3 space-y-2 text-xs">
                     <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold">E-Mail</p>
-                        <p id="pwInfoEmail" class="text-slate-100 font-mono break-all"></p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Name</p>
+                        <p id="pwInfoName" class="text-slate-100 font-medium break-all"></p>
                     </div>
                     <div>
                         <p class="text-[10px] text-slate-500 uppercase font-bold">Passwort</p>
@@ -283,6 +283,13 @@
                         <p class="text-[10px] text-slate-400">Galerie oder Kamera öffnen</p>
                     </div>
                     <img id="photoPreviewImg" src="" alt="Vorschau" class="hidden w-full aspect-square object-cover">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="photoFolderSelect" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ordner</label>
+                    <select id="photoFolderSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500/50">
+                        <option value="">Allgemein</option>
+                    </select>
                 </div>
 
                 <div class="space-y-1.5">
@@ -404,20 +411,27 @@
 
             <!-- TAB 4: FOTO-HUB -->
             <div id="tab-fotos" class="tab-content hidden space-y-3">
-                <div class="flex items-center justify-between">
-                    <div>
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
                         <h2 class="font-bold text-sm text-slate-100 flex items-center gap-1.5">
                             <i class="fa-solid fa-images text-purple-400"></i> Foto-Galerie
                         </h2>
                         <p class="text-[11px] text-slate-400">Fotos & Highlights aus Großenritte</p>
                     </div>
                     
-                    <button id="uploadPhotoBtn" onclick="triggerPhotoUpload()" class="hidden px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow transition items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> Bild posten
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button id="createFolderBtn" onclick="promptCreateFolder()" class="hidden px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition items-center gap-1">
+                            <i class="fa-solid fa-folder-plus"></i> Ordner
+                        </button>
+                        <button id="uploadPhotoBtn" onclick="triggerPhotoUpload()" class="hidden px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow transition items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Bild
+                        </button>
+                    </div>
                 </div>
 
                 <div id="photoCloudStatus" class="rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed"></div>
+
+                <div id="photoFolderBar" class="flex gap-2 overflow-x-auto hide-scrollbar pb-0.5"></div>
 
                 <!-- Photo Gallery Grid -->
                 <div id="photoGrid" class="grid grid-cols-2 gap-2.5">
@@ -459,11 +473,11 @@
                     <h3 class="font-bold text-xs text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                         <i class="fa-solid fa-users-gear"></i> Kirmesteam Mitglieder & Rechte
                     </h3>
-                    <p class="text-[11px] text-slate-400">E-Mail freischalten – Passwort wird automatisch erzeugt. Nur Admins sehen es und können es an die Person schicken.</p>
+                    <p class="text-[11px] text-slate-400">Namen freischalten – Passwort wird automatisch erzeugt. Nur Admins sehen es und können es an die Person schicken.</p>
                     
                     <div class="space-y-2">
                         <div class="flex gap-2">
-                            <input type="email" id="newUserEmail" placeholder="helfer@kirmesteam-grossenritte.de" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-purple-500">
+                            <input type="text" id="newUserName" placeholder="z. B. Klaus Helfer" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-purple-500">
                             <select id="newUserRole" class="bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-purple-500">
                                 <option value="mitglied">Team-Mitglied</option>
                                 <option value="admin">Vorstand / Admin</option>
@@ -573,15 +587,18 @@
     <script>
         /* Application Data State */
         let currentRole = 'gast'; // 'gast', 'mitglied', 'admin'
-        let currentUserEmail = null;
+        let currentUserName = null;
         let currentTab = 'home';
         let pushEnabled = false;
         let db = null;
         let cloudPhotosReady = false;
         let photosUnsubscribe = null;
+        let foldersUnsubscribe = null;
         let usersUnsubscribe = null;
         let usersSeeded = false;
         let photoUploadInProgress = false;
+        let photoFolders = [];
+        let currentFolderId = '__all__'; // __all__ | '' (Allgemein) | folderId
         const SESSION_KEY = 'kirmes_session';
 
         // Firebase: Galerie-Metadaten (Firestore). Bilder liegen bei ImgBB.
@@ -613,22 +630,26 @@
         }
 
         // Freigeschaltete Konten (Quelle: Firestore `users`, Fallback lokal)
-        // Passwörter nur für Admins in der UI sichtbar
+        // Login: Name + Passwort – Passwörter nur für Admins sichtbar
         const DEFAULT_USERS = [
-            { email: 'vorstand@kirmesteam-grossenritte.de', role: 'admin', password: 'KirmesVorstand26' },
-            { email: 'klaus.helfer@kirmesteam-grossenritte.de', role: 'mitglied', password: 'HelferKlaus26' },
-            { email: 'maria.theke@kirmesteam-grossenritte.de', role: 'mitglied', password: 'HelferMaria26' }
+            { name: 'Vorstand', role: 'admin', password: 'KirmesVorstand26' },
+            { name: 'Klaus Helfer', role: 'mitglied', password: 'HelferKlaus26' },
+            { name: 'Maria Theke', role: 'mitglied', password: 'HelferMaria26' }
         ];
         let users = DEFAULT_USERS.map((u) => ({ ...u }));
         let lastPasswordInfo = null;
 
-        function normalizeEmail(email) {
-            return String(email || '').trim().toLowerCase();
+        function normalizeName(name) {
+            return String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
         }
 
-        function findUserByEmail(email) {
-            const key = normalizeEmail(email);
-            return users.find((u) => normalizeEmail(u.email) === key) || null;
+        function userDocId(name) {
+            return normalizeName(name).replace(/\s+/g, '_');
+        }
+
+        function findUserByName(name) {
+            const key = normalizeName(name);
+            return users.find((u) => normalizeName(u.name) === key) || null;
         }
 
         function generatePassword(length = 10) {
@@ -661,8 +682,8 @@
         ];
 
         let shifts = [
-            { id: 101, title: 'Bier-Ausschank 1 (Hauptschicht)', time: 'Fr 18:00 - 22:00', needed: 3, claimed: ['klaus.helfer@kirmesteam-grossenritte.de'] },
-            { id: 102, title: 'Bier-Ausschank 2 (Nachtschicht)', time: 'Fr 22:00 - 02:00', needed: 4, claimed: ['maria.theke@kirmesteam-grossenritte.de'] },
+            { id: 101, title: 'Bier-Ausschank 1 (Hauptschicht)', time: 'Fr 18:00 - 22:00', needed: 3, claimed: ['Klaus Helfer'] },
+            { id: 102, title: 'Bier-Ausschank 2 (Nachtschicht)', time: 'Fr 22:00 - 02:00', needed: 4, claimed: ['Maria Theke'] },
             { id: 103, title: 'Kasse & Wertmarken', time: 'Sa 14:00 - 18:00', needed: 2, claimed: [] },
             { id: 104, title: 'Zelt-Security / Eingang', time: 'Sa 20:00 - 01:00', needed: 3, claimed: [] }
         ];
@@ -679,8 +700,8 @@
 
         // Fotos: Dateien bei ImgBB, Liste in Firestore – lokal nur Demo-Fallback ohne Config
         const DEMO_PHOTOS = [
-            { id: 1, url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80', caption: 'Stimmung im Festzelt Großenritte! 🎉', author: 'Kirmesteam Großenritte' },
-            { id: 2, url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80', caption: 'Festumzug durch Großenritte 🎺', author: 'Foto-Team' }
+            { id: 1, url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80', caption: 'Stimmung im Festzelt Großenritte! 🎉', author: 'Kirmesteam Großenritte', folderId: '' },
+            { id: 2, url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80', caption: 'Festumzug durch Großenritte 🎺', author: 'Foto-Team', folderId: '' }
         ];
         let photos = [...DEMO_PHOTOS];
 
@@ -710,6 +731,7 @@
                 db = firebase.firestore();
                 cloudPhotosReady = false;
                 subscribePhotos();
+                subscribeFolders();
                 seedUsersIfEmpty();
                 updateCloudStatusBanner();
                 console.log('ImgBB + Firestore für Fotos/Users bereit.');
@@ -729,7 +751,8 @@
         async function seedUsersIfEmpty() {
             if (!db || usersSeeded) return;
             try {
-                const snap = await db.collection('users').limit(1).get();
+                // Collection `members` (Name+Passwort); alte `users`-E-Mail-Liste bleibt unberührt
+                const snap = await db.collection('members').limit(1).get();
                 if (!snap.empty) {
                     usersSeeded = true;
                     return;
@@ -737,9 +760,9 @@
                 usersSeeded = true;
                 const batch = db.batch();
                 DEFAULT_USERS.forEach((u) => {
-                    const email = normalizeEmail(u.email);
-                    batch.set(db.collection('users').doc(email), {
-                        email,
+                    const name = String(u.name).trim();
+                    batch.set(db.collection('members').doc(userDocId(name)), {
+                        name,
                         role: u.role,
                         password: u.password
                     });
@@ -762,20 +785,22 @@
             if (!db || currentRole !== 'admin') return;
             unsubscribeUsers();
 
-            usersUnsubscribe = db.collection('users').onSnapshot(
+            usersUnsubscribe = db.collection('members').onSnapshot(
                 async (snap) => {
                     const mapped = [];
                     const missingPw = [];
                     snap.docs.forEach((docSnap) => {
                         const data = docSnap.data() || {};
-                        const email = normalizeEmail(data.email || docSnap.id);
+                        // name-basiert; alte email-Felder als Fallback lesen
+                        const name = String(data.name || docSnap.id).trim();
+                        if (!name) return;
                         const role = data.role === 'admin' ? 'admin' : 'mitglied';
                         let password = data.password || '';
                         if (!password) {
                             password = generatePassword();
-                            missingPw.push({ email, role, password });
+                            missingPw.push({ name, role, password });
                         }
-                        mapped.push({ email, role, password });
+                        mapped.push({ name, role, password });
                     });
                     users = mapped;
 
@@ -783,8 +808,8 @@
                         try {
                             const batch = db.batch();
                             missingPw.forEach((u) => {
-                                batch.set(db.collection('users').doc(u.email), {
-                                    email: u.email,
+                                batch.set(db.collection('members').doc(userDocId(u.name)), {
+                                    name: u.name,
                                     role: u.role,
                                     password: u.password
                                 }, { merge: true });
@@ -799,21 +824,28 @@
                 },
                 (err) => {
                     console.error('Firestore users Listener:', err);
-                    showToast('Mitgliederliste nicht erreichbar. Prüfe Firestore-Regeln (users).', 'error');
+                    showToast('Mitgliederliste nicht erreichbar. Prüfe Firestore-Regeln (members).', 'error');
                 }
             );
         }
 
-        async function fetchUserFromCloud(email) {
-            const key = normalizeEmail(email);
+        async function fetchUserFromCloud(name) {
+            const key = normalizeName(name);
             if (!key) return null;
             if (db) {
                 try {
-                    const docSnap = await db.collection('users').doc(key).get();
-                    if (!docSnap.exists) return null;
+                    let docSnap = await db.collection('members').doc(userDocId(name)).get();
+                    if (!docSnap.exists) {
+                        const snap = await db.collection('members').get();
+                        docSnap = snap.docs.find((d) => {
+                            const data = d.data() || {};
+                            return normalizeName(data.name || d.id) === key;
+                        }) || null;
+                    }
+                    if (!docSnap || !docSnap.exists) return null;
                     const data = docSnap.data() || {};
                     return {
-                        email: normalizeEmail(data.email || docSnap.id),
+                        name: String(data.name || docSnap.id).trim(),
                         role: data.role === 'admin' ? 'admin' : 'mitglied',
                         password: data.password || ''
                     };
@@ -822,7 +854,7 @@
                     return null;
                 }
             }
-            return findUserByEmail(key);
+            return findUserByName(name);
         }
 
         function updateCloudStatusBanner(forceState) {
@@ -869,13 +901,15 @@
                         photos = snap.docs.map((docSnap) => {
                             const data = docSnap.data() || {};
                             return {
-                                id: data.id || docSnap.id,
+                                id: String(data.id || docSnap.id),
                                 url: data.url || '',
                                 caption: data.caption || '',
-                                author: data.author || 'Kirmesteam Großenritte'
+                                author: data.author || 'Kirmesteam Großenritte',
+                                folderId: data.folderId || ''
                             };
                         }).filter((p) => !!p.url);
                         updateCloudStatusBanner();
+                        renderFolderBar();
                         renderPhotos();
                     },
                     (err) => {
@@ -887,9 +921,177 @@
                 );
         }
 
+        function subscribeFolders() {
+            if (!db) return;
+            if (foldersUnsubscribe) {
+                foldersUnsubscribe();
+                foldersUnsubscribe = null;
+            }
+
+            foldersUnsubscribe = db.collection('photoFolders').onSnapshot(
+                (snap) => {
+                    photoFolders = snap.docs.map((docSnap) => {
+                        const data = docSnap.data() || {};
+                        return {
+                            id: String(data.id || docSnap.id),
+                            name: data.name || 'Ordner',
+                            createdAt: data.createdAt || null
+                        };
+                    }).sort((a, b) => String(a.name).localeCompare(String(b.name), 'de'));
+                    if (currentFolderId && currentFolderId !== '__all__' && currentFolderId !== '' &&
+                        !photoFolders.some((f) => f.id === currentFolderId)) {
+                        currentFolderId = '__all__';
+                    }
+                    renderFolderBar();
+                    populateFolderSelect();
+                    renderPhotos();
+                },
+                (err) => {
+                    console.error('Firestore folders Listener:', err);
+                    showToast('Ordner nicht erreichbar. Prüfe Firestore-Regeln (photoFolders).', 'error');
+                }
+            );
+        }
+
+        function populateFolderSelect() {
+            const select = document.getElementById('photoFolderSelect');
+            if (!select) return;
+            const prev = select.value;
+            select.innerHTML = `<option value="">Allgemein</option>` + photoFolders.map((f) =>
+                `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`
+            ).join('');
+            if (prev && [...select.options].some((o) => o.value === prev)) {
+                select.value = prev;
+            } else if (currentFolderId && currentFolderId !== '__all__') {
+                select.value = currentFolderId;
+            }
+        }
+
+        function renderFolderBar() {
+            const bar = document.getElementById('photoFolderBar');
+            if (!bar) return;
+
+            if (currentFolderId === null || currentFolderId === undefined) {
+                currentFolderId = '__all__';
+            }
+
+            const chips = [
+                { id: '__all__', name: 'Alle', icon: 'fa-images' },
+                { id: '', name: 'Allgemein', icon: 'fa-folder' },
+                ...photoFolders.map((f) => ({ id: f.id, name: f.name, icon: 'fa-folder-open' }))
+            ];
+
+            bar.innerHTML = chips.map((c) => {
+                const active = currentFolderId === c.id;
+                const isCustom = c.id && c.id !== '__all__' && c.id !== '';
+                const count = c.id === '__all__'
+                    ? photos.length
+                    : photos.filter((p) => (p.folderId || '') === c.id).length;
+                return `
+                    <div class="shrink-0 flex items-center gap-1">
+                        <button onclick='selectPhotoFolder(${JSON.stringify(c.id)})' class="px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition flex items-center gap-1.5 ${active ? 'bg-purple-600 border-purple-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-600'}">
+                            <i class="fa-solid ${c.icon} text-[10px]"></i>
+                            ${escapeHtml(c.name)}
+                            <span class="text-[9px] opacity-70">${count}</span>
+                        </button>
+                        ${isCustom && active && currentRole === 'admin' ? `
+                            <button onclick='deletePhotoFolder(${JSON.stringify(c.id)})' class="px-2 py-1.5 rounded-xl text-[10px] border border-slate-800 bg-slate-950 text-slate-500 hover:text-rose-400 hover:border-rose-500/40" title="Ordner löschen">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectPhotoFolder(folderId) {
+            currentFolderId = folderId;
+            renderFolderBar();
+            renderPhotos();
+        }
+
+        async function promptCreateFolder() {
+            if (currentRole === 'gast') {
+                showToast('Nur Mitglieder können Ordner anlegen.', 'error');
+                return;
+            }
+            if (!db) {
+                showToast('Cloud nicht bereit.', 'error');
+                return;
+            }
+            const name = prompt('Name für den neuen Ordner:');
+            if (name === null) return;
+            const trimmed = String(name).trim();
+            if (trimmed.length < 2) {
+                showToast('Bitte einen gültigen Ordnernamen eingeben.', 'error');
+                return;
+            }
+            if (photoFolders.some((f) => f.name.toLowerCase() === trimmed.toLowerCase())) {
+                showToast('Ordner existiert bereits.', 'info');
+                return;
+            }
+
+            const id = String(Date.now());
+            try {
+                await db.collection('photoFolders').doc(id).set({
+                    id,
+                    name: trimmed,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                currentFolderId = id;
+                showToast(`Ordner „${trimmed}“ angelegt.`, 'success');
+            } catch (e) {
+                console.error(e);
+                showToast('Ordner konnte nicht angelegt werden. Prüfe Firestore-Regeln (photoFolders).', 'error');
+            }
+        }
+
+        async function deletePhotoFolder(folderId) {
+            if (currentRole !== 'admin') {
+                showToast('Nur der Vorstand kann Ordner löschen.', 'error');
+                return;
+            }
+            if (!db || !folderId) return;
+            const folder = photoFolders.find((f) => f.id === folderId);
+            if (!folder) return;
+            if (!confirm(`Ordner „${folder.name}“ löschen? Fotos landen in „Allgemein“.`)) return;
+
+            try {
+                const inFolder = photos.filter((p) => p.folderId === folderId);
+                const batch = db.batch();
+                inFolder.forEach((p) => {
+                    batch.update(db.collection('photos').doc(String(p.id)), { folderId: '' });
+                });
+                batch.delete(db.collection('photoFolders').doc(folderId));
+                await batch.commit();
+                if (currentFolderId === folderId) currentFolderId = '__all__';
+                showToast('Ordner gelöscht.', 'info');
+            } catch (e) {
+                console.error(e);
+                showToast('Ordner konnte nicht gelöscht werden.', 'error');
+            }
+        }
+
+        async function deletePhoto(photoId) {
+            if (currentRole === 'gast') {
+                showToast('Nur Mitglieder können Fotos löschen.', 'error');
+                return;
+            }
+            if (!db || !photoId) return;
+            if (!confirm('Dieses Foto wirklich löschen?')) return;
+
+            try {
+                await db.collection('photos').doc(String(photoId)).delete();
+                showToast('Foto gelöscht.', 'info');
+            } catch (e) {
+                console.error(e);
+                showToast('Foto konnte nicht gelöscht werden.', 'error');
+            }
+        }
+
         function saveStateToCloud() {
             // Keine Passwörter in localStorage speichern
-            const usersSafe = users.map(({ email, role }) => ({ email, role }));
+            const usersSafe = users.map(({ name, role }) => ({ name, role }));
             const state = { announcements, shifts, poll, users: usersSafe };
             try {
                 localStorage.setItem('kirmesteam_grossenritte_db', JSON.stringify(state));
@@ -998,12 +1200,12 @@
         }
 
         function saveSession() {
-            if (!currentUserEmail || currentRole === 'gast') {
+            if (!currentUserName || currentRole === 'gast') {
                 localStorage.removeItem(SESSION_KEY);
                 return;
             }
             localStorage.setItem(SESSION_KEY, JSON.stringify({
-                email: currentUserEmail,
+                name: currentUserName,
                 role: currentRole
             }));
         }
@@ -1013,15 +1215,15 @@
                 const raw = localStorage.getItem(SESSION_KEY);
                 if (!raw) return;
                 const session = JSON.parse(raw);
-                const email = normalizeEmail(session.email);
-                const user = await fetchUserFromCloud(email);
+                const name = session.name || session.email; // email = alte Sessions
+                const user = await fetchUserFromCloud(name);
                 if (!user) {
                     localStorage.removeItem(SESSION_KEY);
-                    currentUserEmail = null;
+                    currentUserName = null;
                     currentRole = 'gast';
                     return;
                 }
-                currentUserEmail = user.email;
+                currentUserName = user.name;
                 currentRole = user.role;
             } catch (e) {
                 localStorage.removeItem(SESSION_KEY);
@@ -1031,16 +1233,16 @@
         function updateAuthHeaderUI() {
             const loginBtn = document.getElementById('loginBtn');
             const loggedIn = document.getElementById('loggedInControls');
-            const emailEl = document.getElementById('loggedInEmail');
+            const nameEl = document.getElementById('loggedInName');
             if (!loginBtn || !loggedIn) return;
 
-            if (currentUserEmail && currentRole !== 'gast') {
+            if (currentUserName && currentRole !== 'gast') {
                 loginBtn.classList.add('hidden');
                 loggedIn.classList.remove('hidden');
                 loggedIn.classList.add('flex');
-                if (emailEl) {
-                    emailEl.textContent = currentUserEmail;
-                    emailEl.title = currentUserEmail;
+                if (nameEl) {
+                    nameEl.textContent = currentUserName;
+                    nameEl.title = currentUserName;
                 }
             } else {
                 loginBtn.classList.remove('hidden');
@@ -1051,12 +1253,12 @@
 
         function openLoginModal() {
             const modal = document.getElementById('loginModal');
-            const emailInput = document.getElementById('loginEmailInput');
+            const nameInput = document.getElementById('loginNameInput');
             const pwInput = document.getElementById('loginPasswordInput');
-            if (emailInput) emailInput.value = '';
+            if (nameInput) nameInput.value = '';
             if (pwInput) pwInput.value = '';
             if (modal) modal.classList.remove('hidden');
-            setTimeout(() => emailInput?.focus(), 50);
+            setTimeout(() => nameInput?.focus(), 50);
         }
 
         function closeLoginModal() {
@@ -1064,12 +1266,12 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        function openPasswordInfoModal(email, password) {
-            lastPasswordInfo = { email, password };
+        function openPasswordInfoModal(name, password) {
+            lastPasswordInfo = { name, password };
             const modal = document.getElementById('passwordInfoModal');
-            const emailEl = document.getElementById('pwInfoEmail');
+            const nameEl = document.getElementById('pwInfoName');
             const pwEl = document.getElementById('pwInfoPassword');
-            if (emailEl) emailEl.textContent = email;
+            if (nameEl) nameEl.textContent = name;
             if (pwEl) pwEl.textContent = password;
             if (modal) modal.classList.remove('hidden');
         }
@@ -1081,7 +1283,7 @@
 
         async function copyPasswordInfo() {
             if (!lastPasswordInfo) return;
-            const text = `Kirmesteam Login\nE-Mail: ${lastPasswordInfo.email}\nPasswort: ${lastPasswordInfo.password}`;
+            const text = `Kirmesteam Login\nName: ${lastPasswordInfo.name}\nPasswort: ${lastPasswordInfo.password}`;
             try {
                 await navigator.clipboard.writeText(text);
                 showToast('Zugangsdaten kopiert – kannst du jetzt weiterleiten.', 'success');
@@ -1090,12 +1292,12 @@
             }
         }
 
-        async function loginWithEmail() {
-            const email = normalizeEmail(document.getElementById('loginEmailInput')?.value);
+        async function loginWithCredentials() {
+            const name = String(document.getElementById('loginNameInput')?.value || '').trim();
             const password = String(document.getElementById('loginPasswordInput')?.value || '');
 
-            if (!email || !email.includes('@')) {
-                showToast('Bitte eine gültige E-Mail eingeben.', 'error');
+            if (!name) {
+                showToast('Bitte deinen Namen eingeben.', 'error');
                 return;
             }
             if (!password) {
@@ -1103,17 +1305,17 @@
                 return;
             }
 
-            const user = await fetchUserFromCloud(email);
+            const user = await fetchUserFromCloud(name);
             if (!user) {
                 showToast('Noch nicht freigeschaltet – bitte den Vorstand kontaktieren.', 'error');
                 return;
             }
             if (!user.password || user.password !== password) {
-                showToast('E-Mail oder Passwort ist falsch.', 'error');
+                showToast('Name oder Passwort ist falsch.', 'error');
                 return;
             }
 
-            currentUserEmail = user.email;
+            currentUserName = user.name;
             applyRoleUI(user.role, { silent: true });
             saveSession();
             updateAuthHeaderUI();
@@ -1124,7 +1326,7 @@
 
         function logout(opts = {}) {
             unsubscribeUsers();
-            currentUserEmail = null;
+            currentUserName = null;
             applyRoleUI('gast', { silent: true });
             localStorage.removeItem(SESSION_KEY);
             updateAuthHeaderUI();
@@ -1140,6 +1342,9 @@
             const btnUmfragen = document.getElementById('nav-umfragen');
             const btnAdmin = document.getElementById('nav-admin');
             const uploadBtn = document.getElementById('uploadPhotoBtn');
+            const folderBtn = document.getElementById('createFolderBtn');
+
+            const showTeamPhotoTools = role === 'mitglied' || role === 'admin';
 
             if (role === 'gast') {
                 bannerText.innerHTML = '<i class="fa-solid fa-user-globe mr-1"></i> Öffentlicher Gastbereich';
@@ -1149,36 +1354,44 @@
                 btnUmfragen.classList.remove('flex');
                 btnAdmin.classList.add('hidden');
                 btnAdmin.classList.remove('flex');
-                if (uploadBtn) uploadBtn.classList.add('hidden');
 
                 if (['schichtplan', 'umfragen', 'admin'].includes(currentTab)) {
                     switchTab('home');
                 }
             } else if (role === 'mitglied') {
-                const mail = currentUserEmail ? ` · ${escapeHtml(currentUserEmail)}` : '';
-                bannerText.innerHTML = `<i class="fa-solid fa-id-badge mr-1 text-blue-400"></i> Team-Mitglied${mail}`;
+                const who = currentUserName ? ` · ${escapeHtml(currentUserName)}` : '';
+                bannerText.innerHTML = `<i class="fa-solid fa-id-badge mr-1 text-blue-400"></i> Team-Mitglied${who}`;
                 btnSchichten.classList.remove('hidden');
                 btnSchichten.classList.add('flex');
                 btnUmfragen.classList.remove('hidden');
                 btnUmfragen.classList.add('flex');
                 btnAdmin.classList.add('hidden');
                 btnAdmin.classList.remove('flex');
-                if (uploadBtn) uploadBtn.classList.remove('hidden');
 
                 if (currentTab === 'admin') switchTab('home');
             } else if (role === 'admin') {
-                const mail = currentUserEmail ? ` · ${escapeHtml(currentUserEmail)}` : '';
-                bannerText.innerHTML = `<i class="fa-solid fa-crown mr-1 text-amber-400"></i> Vorstand${mail}`;
+                const who = currentUserName ? ` · ${escapeHtml(currentUserName)}` : '';
+                bannerText.innerHTML = `<i class="fa-solid fa-crown mr-1 text-amber-400"></i> Vorstand${who}`;
                 btnSchichten.classList.remove('hidden');
                 btnSchichten.classList.add('flex');
                 btnUmfragen.classList.remove('hidden');
                 btnUmfragen.classList.add('flex');
                 btnAdmin.classList.remove('hidden');
                 btnAdmin.classList.add('flex');
-                if (uploadBtn) uploadBtn.classList.remove('hidden');
+            }
+
+            if (uploadBtn) {
+                uploadBtn.classList.toggle('hidden', !showTeamPhotoTools);
+                uploadBtn.classList.toggle('inline-flex', showTeamPhotoTools);
+            }
+            if (folderBtn) {
+                folderBtn.classList.toggle('hidden', !showTeamPhotoTools);
+                folderBtn.classList.toggle('inline-flex', showTeamPhotoTools);
             }
 
             renderAnnouncements();
+            renderFolderBar();
+            renderPhotos();
             updateAuthHeaderUI();
             if (!opts.silent) {
                 showToast(`Rolle: ${role === 'gast' ? 'Gast' : (role === 'mitglied' ? 'Team-Mitglied' : 'Vorstand')}`, 'info');
@@ -1266,7 +1479,7 @@
             list.innerHTML = shifts.map(s => {
                 const isFull = s.claimed.length >= s.needed;
                 if (!isFull) openCount++;
-                const me = currentUserEmail || '';
+                const me = currentUserName || '';
                 const userClaimed = me ? s.claimed.includes(me) : false;
 
                 return `
@@ -1297,18 +1510,18 @@
         function toggleShift(id) {
             const shift = shifts.find(s => s.id === id);
             if (!shift) return;
-            if (!currentUserEmail) {
+            if (!currentUserName) {
                 showToast("Bitte zuerst anmelden.", "error");
                 return;
             }
 
-            const idx = shift.claimed.indexOf(currentUserEmail);
+            const idx = shift.claimed.indexOf(currentUserName);
             if (idx > -1) {
                 shift.claimed.splice(idx, 1);
                 showToast("Du hast dich aus der Schicht ausgetragen.", "info");
             } else {
                 if (shift.claimed.length < shift.needed) {
-                    shift.claimed.push(currentUserEmail);
+                    shift.claimed.push(currentUserName);
                     showToast("Erfolgreich für die Schicht eingetragen! 🎉", "success");
                 }
             }
@@ -1365,23 +1578,38 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function getVisiblePhotos() {
+            if (currentFolderId === '__all__' || currentFolderId === null || currentFolderId === undefined) {
+                return photos;
+            }
+            return photos.filter((p) => (p.folderId || '') === currentFolderId);
+        }
+
         function renderPhotos() {
             const grid = document.getElementById('photoGrid');
             if (!grid) return;
 
-            if (!photos.length) {
+            const visible = getVisiblePhotos();
+            const canDelete = currentRole === 'mitglied' || currentRole === 'admin';
+
+            if (!visible.length) {
                 grid.innerHTML = `
                     <div class="col-span-2 rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 p-8 text-center">
                         <i class="fa-solid fa-images text-slate-600 text-2xl mb-2"></i>
-                        <p class="text-xs text-slate-400">Noch keine Cloud-Fotos. Als Mitglied kannst du Bilder vom Handy hochladen.</p>
+                        <p class="text-xs text-slate-400">Noch keine Fotos in diesem Ordner.</p>
                     </div>
                 `;
                 return;
             }
 
-            grid.innerHTML = photos.map(p => `
-                <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow">
+            grid.innerHTML = visible.map(p => `
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow relative group">
                     <img src="${escapeHtml(p.url)}" alt="Foto" class="w-full aspect-square object-cover bg-slate-900" loading="lazy">
+                    ${canDelete ? `
+                        <button onclick='deletePhoto(${JSON.stringify(String(p.id))})' class="absolute top-2 right-2 w-8 h-8 rounded-xl bg-slate-950/80 border border-slate-700 text-rose-300 hover:bg-rose-500/20 hover:border-rose-500/40 flex items-center justify-center shadow" title="Foto löschen">
+                            <i class="fa-solid fa-trash text-[11px]"></i>
+                        </button>
+                    ` : ''}
                     <div class="p-2.5 space-y-0.5">
                         <p class="text-[11px] font-medium text-slate-200 line-clamp-2">${escapeHtml(p.caption)}</p>
                         <span class="text-[9px] text-purple-400 font-semibold block">von ${escapeHtml(p.author)}</span>
@@ -1434,6 +1662,11 @@
                 preview.classList.add('hidden');
             }
             if (placeholder) placeholder.classList.remove('hidden');
+            populateFolderSelect();
+            const folderSelect = document.getElementById('photoFolderSelect');
+            if (folderSelect) {
+                folderSelect.value = (currentFolderId && currentFolderId !== '__all__') ? currentFolderId : '';
+            }
             setPhotoUploadLoading(false);
             if (modal) modal.classList.remove('hidden');
         }
@@ -1551,8 +1784,9 @@
 
             const captionInput = document.getElementById('photoCaptionInput');
             const caption = (captionInput?.value || '').trim() || 'Kirmesstimmung pur in Großenritte! 🎉';
-            const author = currentUserEmail
-                || (currentRole === 'admin' ? 'Vorstand' : 'Kirmesteam Großenritte');
+            const author = 'Kirmesteam Großenritte';
+            const folderSelect = document.getElementById('photoFolderSelect');
+            const folderId = folderSelect ? (folderSelect.value || '') : '';
             const id = String(Date.now());
 
             setPhotoUploadLoading(true);
@@ -1564,8 +1798,12 @@
                     url,
                     caption,
                     author,
+                    folderId,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
+                if (folderId) currentFolderId = folderId;
+                else if (currentFolderId !== '__all__') currentFolderId = '';
 
                 photoUploadInProgress = false;
                 setPhotoUploadLoading(false);
@@ -1590,16 +1828,16 @@
             list.innerHTML = users.map((u) => `
                 <div class="p-2.5 rounded-lg bg-slate-950 text-[11px] space-y-1.5">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="text-slate-300 font-mono truncate max-w-[180px]">${escapeHtml(u.email)}</span>
+                        <span class="text-slate-200 font-medium truncate max-w-[180px]">${escapeHtml(u.name)}</span>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="px-2 py-0.5 rounded text-[9px] font-bold ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-blue-500/20 text-blue-300'}">
                                 ${u.role === 'admin' ? 'Vorstand' : 'Mitglied'}
                             </span>
                             ${isAdminView ? `
-                                <button onclick='regenerateUserPassword(${JSON.stringify(u.email)})' class="text-slate-500 hover:text-amber-300 px-1" title="Neues Passwort erzeugen">
+                                <button onclick='regenerateUserPassword(${JSON.stringify(u.name)})' class="text-slate-500 hover:text-amber-300 px-1" title="Neues Passwort erzeugen">
                                     <i class="fa-solid fa-key text-[10px]"></i>
                                 </button>
-                                <button onclick='removeUser(${JSON.stringify(u.email)})' class="text-slate-500 hover:text-rose-400 px-1" title="Freischaltung entfernen">
+                                <button onclick='removeUser(${JSON.stringify(u.name)})' class="text-slate-500 hover:text-rose-400 px-1" title="Freischaltung entfernen">
                                     <i class="fa-solid fa-trash text-[10px]"></i>
                                 </button>
                             ` : ''}
@@ -1608,7 +1846,7 @@
                     ${isAdminView ? `
                         <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
                             <span class="text-[10px] text-slate-500">Passwort:</span>
-                            <button onclick='openPasswordInfoModal(${JSON.stringify(u.email)}, ${JSON.stringify(u.password || '')})' class="text-[11px] font-mono text-amber-300 hover:text-amber-200 truncate max-w-[180px]" title="Anzeigen / kopieren">
+                            <button onclick='openPasswordInfoModal(${JSON.stringify(u.name)}, ${JSON.stringify(u.password || '')})' class="text-[11px] font-mono text-amber-300 hover:text-amber-200 truncate max-w-[180px]" title="Anzeigen / kopieren">
                                 ${escapeHtml(u.password || '—')}
                             </button>
                         </div>
@@ -1618,62 +1856,61 @@
         }
 
         async function addUser() {
-            const emailInput = document.getElementById('newUserEmail');
-            const email = normalizeEmail(emailInput.value);
+            const nameInput = document.getElementById('newUserName');
+            const name = String(nameInput.value || '').trim();
             const role = document.getElementById('newUserRole').value === 'admin' ? 'admin' : 'mitglied';
-            if (!email || !email.includes('@')) {
-                showToast("Bitte eine gültige E-Mail eingeben!", "error");
+            if (!name || name.length < 2) {
+                showToast("Bitte einen Namen eingeben!", "error");
                 return;
             }
 
-            if (findUserByEmail(email)) {
-                showToast("Diese E-Mail ist bereits freigeschaltet.", "info");
+            if (findUserByName(name)) {
+                showToast("Dieser Name ist bereits freigeschaltet.", "info");
                 return;
             }
 
             const password = generatePassword();
-            const record = { email, role, password };
+            const record = { name, role, password };
 
             if (db) {
                 try {
-                    await db.collection('users').doc(email).set(record);
-                    emailInput.value = '';
-                    showToast(`Rechte für ${email} freigeschaltet!`, "success");
-                    openPasswordInfoModal(email, password);
+                    await db.collection('members').doc(userDocId(name)).set(record);
+                    nameInput.value = '';
+                    showToast(`${name} freigeschaltet!`, "success");
+                    openPasswordInfoModal(name, password);
                 } catch (e) {
                     console.error(e);
-                    showToast("Freischaltung fehlgeschlagen. Prüfe Firestore-Regeln (users).", "error");
+                    showToast("Freischaltung fehlgeschlagen. Prüfe Firestore-Regeln (members).", "error");
                 }
                 return;
             }
 
             users.push(record);
-            emailInput.value = '';
+            nameInput.value = '';
             saveStateToCloud();
             renderUsers();
-            showToast(`Rechte für ${email} freigeschaltet!`, "success");
-            openPasswordInfoModal(email, password);
+            showToast(`${name} freigeschaltet!`, "success");
+            openPasswordInfoModal(name, password);
         }
 
-        async function regenerateUserPassword(email) {
+        async function regenerateUserPassword(name) {
             if (currentRole !== 'admin') {
                 showToast('Nur der Vorstand kann Passwörter erzeugen.', 'error');
                 return;
             }
-            const key = normalizeEmail(email);
-            const user = findUserByEmail(key);
+            const user = findUserByName(name);
             if (!user) return;
 
             const password = generatePassword();
             if (db) {
                 try {
-                    await db.collection('users').doc(key).set({
-                        email: key,
+                    await db.collection('members').doc(userDocId(user.name)).set({
+                        name: user.name,
                         role: user.role,
                         password
                     }, { merge: true });
                     showToast('Neues Passwort erzeugt.', 'success');
-                    openPasswordInfoModal(key, password);
+                    openPasswordInfoModal(user.name, password);
                 } catch (e) {
                     console.error(e);
                     showToast('Passwort konnte nicht gespeichert werden.', 'error');
@@ -1685,20 +1922,20 @@
             saveStateToCloud();
             renderUsers();
             showToast('Neues Passwort erzeugt.', 'success');
-            openPasswordInfoModal(key, password);
+            openPasswordInfoModal(user.name, password);
         }
 
-        async function removeUser(email) {
-            const key = normalizeEmail(email);
-            if (!key) return;
-            if (currentUserEmail && normalizeEmail(currentUserEmail) === key) {
+        async function removeUser(name) {
+            const user = findUserByName(name);
+            if (!user) return;
+            if (currentUserName && normalizeName(currentUserName) === normalizeName(user.name)) {
                 showToast("Du kannst dich nicht selbst entfernen.", "error");
                 return;
             }
 
             if (db) {
                 try {
-                    await db.collection('users').doc(key).delete();
+                    await db.collection('members').doc(userDocId(user.name)).delete();
                     showToast("Freischaltung entfernt.", "info");
                 } catch (e) {
                     console.error(e);
@@ -1707,7 +1944,7 @@
                 return;
             }
 
-            users = users.filter((u) => normalizeEmail(u.email) !== key);
+            users = users.filter((u) => normalizeName(u.name) !== normalizeName(user.name));
             saveStateToCloud();
             renderUsers();
             showToast("Freischaltung entfernt.", "info");

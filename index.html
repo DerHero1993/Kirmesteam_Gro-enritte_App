@@ -258,6 +258,50 @@
             </div>
         </div>
 
+        <!-- Edit announcement (Admin) -->
+        <div id="editAnnouncementModal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                        <i class="fa-solid fa-pen"></i> Meldung bearbeiten
+                    </h3>
+                    <button onclick="closeEditAnnouncementModal()" class="text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <input type="hidden" id="editAnnounceId" value="">
+
+                <div class="space-y-1.5">
+                    <label for="editAnnounceTitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Titel</label>
+                    <input type="text" id="editAnnounceTitle" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500/50">
+                </div>
+                <div class="space-y-1.5">
+                    <label for="editAnnounceText" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Text</label>
+                    <textarea id="editAnnounceText" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-purple-500/50 h-24"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 cursor-pointer">
+                        <input type="radio" name="editAnnounceAudience" value="public" class="accent-blue-500 w-3.5 h-3.5">
+                        <span class="font-medium text-[11px]">🌐 Öffentlich</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 text-amber-300 cursor-pointer">
+                        <input type="radio" name="editAnnounceAudience" value="internal" class="accent-amber-500 w-3.5 h-3.5">
+                        <span class="font-medium text-[11px]">🔒 Nur Team</span>
+                    </label>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button onclick="saveEditedAnnouncement()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Änderungen speichern
+                    </button>
+                    <button onclick="closeEditAnnouncementModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
+                        Abbrechen
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Change own password (Mitglieder + Admin) -->
         <div id="changePasswordModal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
             <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
@@ -1609,18 +1653,103 @@
                 return;
             }
 
+            const canManage = currentRole === 'admin';
             list.innerHTML = visibleAnnouncements.map(a => `
                 <div class="p-2.5 rounded-xl bg-slate-950 border ${a.internalOnly ? 'border-amber-500/40' : 'border-slate-800'} text-xs space-y-1">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-200 flex items-center gap-1.5">
-                            ${a.title}
-                            ${a.internalOnly ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">INTERN</span>' : ''}
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="font-bold text-slate-200 flex items-center gap-1.5 min-w-0">
+                            <span class="truncate">${escapeHtml(a.title)}</span>
+                            ${a.internalOnly ? '<span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">INTERN</span>' : ''}
                         </span>
-                        <span class="text-[10px] text-slate-500">${a.date}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-[10px] text-slate-500">${escapeHtml(a.date)}</span>
+                            ${canManage ? `
+                                <button onclick="openEditAnnouncementModal(${Number(a.id)})" class="text-slate-500 hover:text-blue-400 p-0.5" title="Meldung bearbeiten">
+                                    <i class="fa-solid fa-pen text-[10px]"></i>
+                                </button>
+                                <button onclick="deleteAnnouncement(${Number(a.id)})" class="text-slate-500 hover:text-rose-400 p-0.5" title="Meldung löschen">
+                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
-                    <p class="text-slate-400 text-[11px] leading-relaxed">${a.text}</p>
+                    <p class="text-slate-400 text-[11px] leading-relaxed">${escapeHtml(a.text)}</p>
                 </div>
             `).join('');
+        }
+
+        function stripAnnounceLockPrefix(title) {
+            return String(title || '').replace(/^🔒\s*/, '').trim();
+        }
+
+        function openEditAnnouncementModal(id) {
+            if (currentRole !== 'admin') {
+                showToast('Nur der Vorstand kann Meldungen bearbeiten.', 'error');
+                return;
+            }
+            const item = announcements.find((a) => a.id === id);
+            if (!item) return;
+
+            document.getElementById('editAnnounceId').value = String(item.id);
+            document.getElementById('editAnnounceTitle').value = stripAnnounceLockPrefix(item.title);
+            document.getElementById('editAnnounceText').value = item.text || '';
+            const audience = item.internalOnly ? 'internal' : 'public';
+            const radio = document.querySelector(`input[name="editAnnounceAudience"][value="${audience}"]`);
+            if (radio) radio.checked = true;
+
+            document.getElementById('editAnnouncementModal').classList.remove('hidden');
+        }
+
+        function closeEditAnnouncementModal() {
+            const modal = document.getElementById('editAnnouncementModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function saveEditedAnnouncement() {
+            if (currentRole !== 'admin') {
+                showToast('Nur der Vorstand kann Meldungen bearbeiten.', 'error');
+                return;
+            }
+            const id = Number(document.getElementById('editAnnounceId').value);
+            const item = announcements.find((a) => a.id === id);
+            if (!item) {
+                showToast('Meldung nicht gefunden.', 'error');
+                return;
+            }
+
+            const titleRaw = document.getElementById('editAnnounceTitle').value.trim();
+            const text = document.getElementById('editAnnounceText').value.trim();
+            const isInternal = document.querySelector('input[name="editAnnounceAudience"]:checked')?.value === 'internal';
+
+            if (!titleRaw) {
+                showToast('Titel darf nicht leer sein!', 'error');
+                return;
+            }
+
+            item.title = isInternal ? `🔒 ${titleRaw}` : titleRaw;
+            item.text = text || (isInternal ? 'Neue interne Information für das Kirmesteam.' : 'Neue Information zur Kirmes Großenritte.');
+            item.internalOnly = isInternal;
+            item.date = 'Bearbeitet';
+
+            saveStateToCloud();
+            renderAnnouncements();
+            closeEditAnnouncementModal();
+            showToast('Meldung aktualisiert.', 'success');
+        }
+
+        function deleteAnnouncement(id) {
+            if (currentRole !== 'admin') {
+                showToast('Nur der Vorstand kann Meldungen löschen.', 'error');
+                return;
+            }
+            const item = announcements.find((a) => a.id === id);
+            if (!item) return;
+            if (!confirm('Diese Meldung wirklich löschen?')) return;
+
+            announcements = announcements.filter((a) => a.id !== id);
+            saveStateToCloud();
+            renderAnnouncements();
+            showToast('Meldung gelöscht.', 'info');
         }
 
         function renderProgram() {

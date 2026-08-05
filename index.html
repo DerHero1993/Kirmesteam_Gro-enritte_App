@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Firebase Cloud SDKs for Realtime Online Data Sync across Devices -->
+    <!-- Firebase Cloud SDKs (Firestore for photo gallery sync) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <!-- Google Font Inter -->
@@ -106,11 +106,17 @@
                     <span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                 </button>
 
-                <select id="roleSelector" onchange="changeRole(this.value)" class="bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 text-[11px] font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer">
-                    <option value="gast">👁️ Gast (Öffentlich)</option>
-                    <option value="mitglied">👥 Team-Mitglied</option>
-                    <option value="admin">⭐ Vorstand / Admin</option>
-                </select>
+                <div id="authControls" class="flex items-center gap-1.5">
+                    <button id="loginBtn" onclick="openLoginModal()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold rounded-lg transition flex items-center gap-1">
+                        <i class="fa-solid fa-right-to-bracket"></i> Anmelden
+                    </button>
+                    <div id="loggedInControls" class="hidden items-center gap-1.5">
+                        <span id="loggedInEmail" class="hidden sm:inline text-[10px] text-slate-400 max-w-[110px] truncate" title=""></span>
+                        <button onclick="logout()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-[11px] font-semibold rounded-lg transition flex items-center gap-1">
+                            <i class="fa-solid fa-right-from-bracket"></i> Abmelden
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -181,6 +187,115 @@
                     </button>
                     <button onclick="togglePushSettingsModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
                         Schließen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal (E-Mail only) -->
+        <div id="loginModal" class="hidden absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                        <i class="fa-solid fa-id-badge"></i> Team-Login
+                    </h3>
+                    <button onclick="closeLoginModal()" class="text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    Melde dich mit der freigeschalteten E-Mail und dem Passwort an, das dir der Vorstand geschickt hat.
+                </p>
+
+                <div class="space-y-1.5">
+                    <label for="loginEmailInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">E-Mail</label>
+                    <input type="email" id="loginEmailInput" autocomplete="username" placeholder="helfer@kirmesteam-grossenritte.de" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="loginPasswordInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Passwort</label>
+                    <input type="password" id="loginPasswordInput" autocomplete="current-password" placeholder="Passwort vom Vorstand" onkeydown="if(event.key==='Enter'){event.preventDefault();loginWithEmail();}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button onclick="loginWithEmail()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-right-to-bracket"></i> Einloggen
+                    </button>
+                    <button onclick="closeLoginModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
+                        Abbrechen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated password info (Admin only) -->
+        <div id="passwordInfoModal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                        <i class="fa-solid fa-key"></i> Zugangsdaten
+                    </h3>
+                    <button onclick="closePasswordInfoModal()" class="text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-400">Nur für den Vorstand sichtbar. Diese Daten an die Person schicken:</p>
+                <div class="rounded-xl bg-slate-950 border border-slate-800 p-3 space-y-2 text-xs">
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">E-Mail</p>
+                        <p id="pwInfoEmail" class="text-slate-100 font-mono break-all"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Passwort</p>
+                        <p id="pwInfoPassword" class="text-amber-300 font-mono text-sm tracking-wide"></p>
+                    </div>
+                </div>
+                <button onclick="copyPasswordInfo()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-copy"></i> Kopieren zum Weiterleiten
+                </button>
+                <button onclick="closePasswordInfoModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
+                    Schließen
+                </button>
+            </div>
+        </div>
+
+        <!-- Photo Upload Modal -->
+        <div id="photoUploadModal" class="hidden absolute inset-0 z-40 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-4 space-y-4 shadow-2xl relative">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                        <i class="fa-solid fa-camera"></i> Bild posten
+                    </h3>
+                    <button onclick="closePhotoUploadModal()" class="text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="onPhotoFileSelected(event)">
+
+                <div id="photoPickArea" onclick="document.getElementById('photoFileInput').click()" class="rounded-xl border border-dashed border-slate-600 bg-slate-950 hover:border-purple-500/60 hover:bg-slate-950/80 transition cursor-pointer overflow-hidden">
+                    <div id="photoPickPlaceholder" class="flex flex-col items-center justify-center gap-2 py-10 px-4 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/15 text-purple-300 flex items-center justify-center">
+                            <i class="fa-solid fa-image text-lg"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-200">Foto vom Handy wählen</p>
+                        <p class="text-[10px] text-slate-400">Galerie oder Kamera öffnen</p>
+                    </div>
+                    <img id="photoPreviewImg" src="" alt="Vorschau" class="hidden w-full aspect-square object-cover">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label for="photoCaptionInput" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bildunterschrift</label>
+                    <input type="text" id="photoCaptionInput" maxlength="120" placeholder="z. B. Stimmung im Festzelt..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-purple-500/50">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button id="confirmPhotoUploadBtn" onclick="confirmPhotoUpload()" disabled class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-upload"></i> Foto veröffentlichen
+                    </button>
+                    <button onclick="closePhotoUploadModal()" class="w-full py-1.5 bg-slate-800 text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-750 transition">
+                        Abbrechen
                     </button>
                 </div>
             </div>
@@ -302,6 +417,8 @@
                     </button>
                 </div>
 
+                <div id="photoCloudStatus" class="rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed"></div>
+
                 <!-- Photo Gallery Grid -->
                 <div id="photoGrid" class="grid grid-cols-2 gap-2.5">
                     <!-- Populated via JS -->
@@ -342,7 +459,7 @@
                     <h3 class="font-bold text-xs text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
                         <i class="fa-solid fa-users-gear"></i> Kirmesteam Mitglieder & Rechte
                     </h3>
-                    <p class="text-[11px] text-slate-400">Trage E-Mails von Helfern & Vorstand ein, um Zugang freizuschalten:</p>
+                    <p class="text-[11px] text-slate-400">E-Mail freischalten – Passwort wird automatisch erzeugt. Nur Admins sehen es und können es an die Person schicken.</p>
                     
                     <div class="space-y-2">
                         <div class="flex gap-2">
@@ -456,26 +573,78 @@
     <script>
         /* Application Data State */
         let currentRole = 'gast'; // 'gast', 'mitglied', 'admin'
+        let currentUserEmail = null;
         let currentTab = 'home';
         let pushEnabled = false;
         let db = null;
+        let cloudPhotosReady = false;
+        let photosUnsubscribe = null;
+        let usersUnsubscribe = null;
+        let usersSeeded = false;
+        let photoUploadInProgress = false;
+        const SESSION_KEY = 'kirmes_session';
 
-        // Firebase Cloud Configuration
+        // Firebase: Galerie-Metadaten (Firestore). Bilder liegen bei ImgBB.
         const firebaseConfig = {
-            apiKey: "AIzaSyDemoKirmesApp2026ApiKeyLive",
-            authDomain: "kirmesteam-grossenritte.firebaseapp.com",
-            projectId: "kirmesteam-grossenritte",
-            storageBucket: "kirmesteam-grossenritte.appspot.com",
-            messagingSenderId: "847291039",
-            appId: "1:847291039:web:a1b2c3d4e5f6"
+            apiKey: "AIzaSyB0CJeNw4bIlRhlGxtkLjF37Lp3zuJLL_g",
+            authDomain: "kirmeteam-grossenritte-app.firebaseapp.com",
+            projectId: "kirmeteam-grossenritte-app",
+            storageBucket: "kirmeteam-grossenritte-app.firebasestorage.app",
+            messagingSenderId: "392930721915",
+            appId: "1:392930721915:web:719d7f302594d58a8ca2de",
+            measurementId: "G-183LWGNTNQ"
         };
 
-        // Mock Database Tables (Default initial values)
-        let users = [
-            { email: 'vorstand@kirmesteam-grossenritte.de', role: 'admin' },
-            { email: 'klaus.helfer@kirmesteam-grossenritte.de', role: 'mitglied' },
-            { email: 'maria.theke@kirmesteam-grossenritte.de', role: 'mitglied' }
+        const IMGBB_API_KEY = "ac388cfa91b5c2782e092cc85c8d994c";
+
+        function isFirebaseConfigured() {
+            const v = firebaseConfig.apiKey || '';
+            return (
+                v.length > 10 &&
+                !v.startsWith('DEIN_') &&
+                !v.includes('Demo') &&
+                firebaseConfig.projectId &&
+                !String(firebaseConfig.projectId).startsWith('DEIN_')
+            );
+        }
+
+        function isPhotoCloudReady() {
+            return isFirebaseConfigured() && !!db && !!IMGBB_API_KEY;
+        }
+
+        // Freigeschaltete Konten (Quelle: Firestore `users`, Fallback lokal)
+        // Passwörter nur für Admins in der UI sichtbar
+        const DEFAULT_USERS = [
+            { email: 'vorstand@kirmesteam-grossenritte.de', role: 'admin', password: 'KirmesVorstand26' },
+            { email: 'klaus.helfer@kirmesteam-grossenritte.de', role: 'mitglied', password: 'HelferKlaus26' },
+            { email: 'maria.theke@kirmesteam-grossenritte.de', role: 'mitglied', password: 'HelferMaria26' }
         ];
+        let users = DEFAULT_USERS.map((u) => ({ ...u }));
+        let lastPasswordInfo = null;
+
+        function normalizeEmail(email) {
+            return String(email || '').trim().toLowerCase();
+        }
+
+        function findUserByEmail(email) {
+            const key = normalizeEmail(email);
+            return users.find((u) => normalizeEmail(u.email) === key) || null;
+        }
+
+        function generatePassword(length = 10) {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+            const arr = new Uint32Array(length);
+            if (window.crypto && window.crypto.getRandomValues) {
+                window.crypto.getRandomValues(arr);
+            } else {
+                for (let i = 0; i < length; i++) arr[i] = Math.floor(Math.random() * chars.length);
+            }
+            let out = '';
+            for (let i = 0; i < length; i++) {
+                out += chars[arr[i] % chars.length];
+            }
+            return out;
+        }
 
         let announcements = [
             { id: 1, title: '🎉 Willkommen zur Kirmes Großenritte 2026!', text: 'Wir freuen uns auf 4 unvergessliche Festtage mit euch! Alle Termine, Programm-Highlights und Infos findet ihr hier in der App.', date: 'Vor 1 Std.', internalOnly: false },
@@ -508,31 +677,226 @@
             ]
         };
 
-        let photos = [
+        // Fotos: Dateien bei ImgBB, Liste in Firestore – lokal nur Demo-Fallback ohne Config
+        const DEMO_PHOTOS = [
             { id: 1, url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80', caption: 'Stimmung im Festzelt Großenritte! 🎉', author: 'Kirmesteam Großenritte' },
             { id: 2, url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80', caption: 'Festumzug durch Großenritte 🎺', author: 'Foto-Team' }
         ];
+        let photos = [...DEMO_PHOTOS];
 
         /* Realtime Cloud Sync Initialization */
         function initCloudSync() {
-            try {
-                if (typeof firebase !== 'undefined') {
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                    }
-                    db = firebase.firestore();
-                    console.log("Firebase Cloud Synchronisation bereit.");
-                }
-            } catch (e) {
-                console.log("Online Cloud Standalone Sync aktiv:", e);
-            }
-            
             loadSavedState();
+            updateCloudStatusBanner();
+
+            if (!isFirebaseConfigured()) {
+                console.warn('Firebase Config noch nicht eingetragen – Foto-Cloud deaktiviert.');
+                photos = [...DEMO_PHOTOS];
+                renderPhotos();
+                restoreSession().then(() => {
+                    applyRoleUI(currentRole, { silent: true });
+                    updateAuthHeaderUI();
+                });
+                return;
+            }
+
+            try {
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK nicht geladen');
+                }
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.firestore();
+                cloudPhotosReady = false;
+                subscribePhotos();
+                seedUsersIfEmpty();
+                updateCloudStatusBanner();
+                console.log('ImgBB + Firestore für Fotos/Users bereit.');
+            } catch (e) {
+                cloudPhotosReady = false;
+                console.error('Firebase Init fehlgeschlagen:', e);
+                updateCloudStatusBanner('init-error');
+            }
+
+            restoreSession().then(() => {
+                applyRoleUI(currentRole, { silent: true });
+                updateAuthHeaderUI();
+                if (currentRole === 'admin') subscribeUsersForAdmin();
+            });
+        }
+
+        async function seedUsersIfEmpty() {
+            if (!db || usersSeeded) return;
+            try {
+                const snap = await db.collection('users').limit(1).get();
+                if (!snap.empty) {
+                    usersSeeded = true;
+                    return;
+                }
+                usersSeeded = true;
+                const batch = db.batch();
+                DEFAULT_USERS.forEach((u) => {
+                    const email = normalizeEmail(u.email);
+                    batch.set(db.collection('users').doc(email), {
+                        email,
+                        role: u.role,
+                        password: u.password
+                    });
+                });
+                await batch.commit();
+            } catch (e) {
+                console.warn('User-Seed fehlgeschlagen:', e);
+            }
+        }
+
+        function unsubscribeUsers() {
+            if (usersUnsubscribe) {
+                usersUnsubscribe();
+                usersUnsubscribe = null;
+            }
+        }
+
+        // Passwort-Liste nur für Admins laden (nicht für Gäste/Mitglieder)
+        function subscribeUsersForAdmin() {
+            if (!db || currentRole !== 'admin') return;
+            unsubscribeUsers();
+
+            usersUnsubscribe = db.collection('users').onSnapshot(
+                async (snap) => {
+                    const mapped = [];
+                    const missingPw = [];
+                    snap.docs.forEach((docSnap) => {
+                        const data = docSnap.data() || {};
+                        const email = normalizeEmail(data.email || docSnap.id);
+                        const role = data.role === 'admin' ? 'admin' : 'mitglied';
+                        let password = data.password || '';
+                        if (!password) {
+                            password = generatePassword();
+                            missingPw.push({ email, role, password });
+                        }
+                        mapped.push({ email, role, password });
+                    });
+                    users = mapped;
+
+                    if (missingPw.length) {
+                        try {
+                            const batch = db.batch();
+                            missingPw.forEach((u) => {
+                                batch.set(db.collection('users').doc(u.email), {
+                                    email: u.email,
+                                    role: u.role,
+                                    password: u.password
+                                }, { merge: true });
+                            });
+                            await batch.commit();
+                        } catch (e) {
+                            console.warn('Passwort-Migration fehlgeschlagen:', e);
+                        }
+                    }
+
+                    renderUsers();
+                },
+                (err) => {
+                    console.error('Firestore users Listener:', err);
+                    showToast('Mitgliederliste nicht erreichbar. Prüfe Firestore-Regeln (users).', 'error');
+                }
+            );
+        }
+
+        async function fetchUserFromCloud(email) {
+            const key = normalizeEmail(email);
+            if (!key) return null;
+            if (db) {
+                try {
+                    const docSnap = await db.collection('users').doc(key).get();
+                    if (!docSnap.exists) return null;
+                    const data = docSnap.data() || {};
+                    return {
+                        email: normalizeEmail(data.email || docSnap.id),
+                        role: data.role === 'admin' ? 'admin' : 'mitglied',
+                        password: data.password || ''
+                    };
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
+            }
+            return findUserByEmail(key);
+        }
+
+        function updateCloudStatusBanner(forceState) {
+            const el = document.getElementById('photoCloudStatus');
+            if (!el) return;
+
+            if (!isFirebaseConfigured() || !IMGBB_API_KEY) {
+                el.className = 'rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-[11px] leading-relaxed text-amber-100';
+                el.innerHTML = `
+                    <p class="font-bold text-amber-300 mb-1"><i class="fa-solid fa-cloud"></i> Foto-Cloud noch nicht bereit</p>
+                    <p class="text-amber-100/90">Firestore muss laufen und der ImgBB-API-Key eingetragen sein.</p>
+                `;
+                return;
+            }
+
+            if (forceState === 'init-error' || forceState === 'error') {
+                el.className = 'rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2.5 text-[11px] text-rose-200';
+                el.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Galerie nicht erreichbar. Prüfe Firestore-Regeln (photos lesen/schreiben erlauben).`;
+                return;
+            }
+
+            if (cloudPhotosReady) {
+                el.className = 'rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-[11px] text-emerald-200';
+                el.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Foto-Cloud aktiv – Bilder bei ImgBB, Galerie live über Firestore.`;
+                return;
+            }
+
+            el.className = 'rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-[11px] text-slate-300';
+            el.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i> Verbinde mit Foto-Cloud…`;
+        }
+
+        function subscribePhotos() {
+            if (!db) return;
+            if (photosUnsubscribe) {
+                photosUnsubscribe();
+                photosUnsubscribe = null;
+            }
+
+            photosUnsubscribe = db.collection('photos')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(
+                    (snap) => {
+                        cloudPhotosReady = true;
+                        photos = snap.docs.map((docSnap) => {
+                            const data = docSnap.data() || {};
+                            return {
+                                id: data.id || docSnap.id,
+                                url: data.url || '',
+                                caption: data.caption || '',
+                                author: data.author || 'Kirmesteam Großenritte'
+                            };
+                        }).filter((p) => !!p.url);
+                        updateCloudStatusBanner();
+                        renderPhotos();
+                    },
+                    (err) => {
+                        console.error('Firestore photos Listener:', err);
+                        cloudPhotosReady = false;
+                        updateCloudStatusBanner('error');
+                        showToast('Foto-Cloud nicht erreichbar. Prüfe Firebase-Config.', 'error');
+                    }
+                );
         }
 
         function saveStateToCloud() {
-            const state = { announcements, shifts, poll, photos, users };
-            localStorage.setItem('kirmesteam_grossenritte_db', JSON.stringify(state));
+            // Keine Passwörter in localStorage speichern
+            const usersSafe = users.map(({ email, role }) => ({ email, role }));
+            const state = { announcements, shifts, poll, users: usersSafe };
+            try {
+                localStorage.setItem('kirmesteam_grossenritte_db', JSON.stringify(state));
+            } catch (e) {
+                console.warn('localStorage voll oder nicht verfügbar:', e);
+                throw e;
+            }
             
             if (window.BroadcastChannel) {
                 const bc = new BroadcastChannel('kirmes_cloud_sync');
@@ -548,8 +912,8 @@
                     if (parsed.announcements) announcements = parsed.announcements;
                     if (parsed.shifts) shifts = parsed.shifts;
                     if (parsed.poll) poll = parsed.poll;
-                    if (parsed.photos) photos = parsed.photos;
-                    if (parsed.users) users = parsed.users;
+                    // users kommen aus Firestore, lokal nur Fallback ohne Cloud
+                    if (!isFirebaseConfigured() && parsed.users) users = parsed.users;
                 } catch(e) {}
             }
 
@@ -560,8 +924,7 @@
                         if (ev.data.announcements) announcements = ev.data.announcements;
                         if (ev.data.shifts) shifts = ev.data.shifts;
                         if (ev.data.poll) poll = ev.data.poll;
-                        if (ev.data.photos) photos = ev.data.photos;
-                        if (ev.data.users) users = ev.data.users;
+                        if (!db && ev.data.users) users = ev.data.users;
                         renderAll();
                     }
                 };
@@ -634,54 +997,197 @@
             }, 3000);
         }
 
-        /* Switch Role function */
-        function changeRole(role) {
+        function saveSession() {
+            if (!currentUserEmail || currentRole === 'gast') {
+                localStorage.removeItem(SESSION_KEY);
+                return;
+            }
+            localStorage.setItem(SESSION_KEY, JSON.stringify({
+                email: currentUserEmail,
+                role: currentRole
+            }));
+        }
+
+        async function restoreSession() {
+            try {
+                const raw = localStorage.getItem(SESSION_KEY);
+                if (!raw) return;
+                const session = JSON.parse(raw);
+                const email = normalizeEmail(session.email);
+                const user = await fetchUserFromCloud(email);
+                if (!user) {
+                    localStorage.removeItem(SESSION_KEY);
+                    currentUserEmail = null;
+                    currentRole = 'gast';
+                    return;
+                }
+                currentUserEmail = user.email;
+                currentRole = user.role;
+            } catch (e) {
+                localStorage.removeItem(SESSION_KEY);
+            }
+        }
+
+        function updateAuthHeaderUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const loggedIn = document.getElementById('loggedInControls');
+            const emailEl = document.getElementById('loggedInEmail');
+            if (!loginBtn || !loggedIn) return;
+
+            if (currentUserEmail && currentRole !== 'gast') {
+                loginBtn.classList.add('hidden');
+                loggedIn.classList.remove('hidden');
+                loggedIn.classList.add('flex');
+                if (emailEl) {
+                    emailEl.textContent = currentUserEmail;
+                    emailEl.title = currentUserEmail;
+                }
+            } else {
+                loginBtn.classList.remove('hidden');
+                loggedIn.classList.add('hidden');
+                loggedIn.classList.remove('flex');
+            }
+        }
+
+        function openLoginModal() {
+            const modal = document.getElementById('loginModal');
+            const emailInput = document.getElementById('loginEmailInput');
+            const pwInput = document.getElementById('loginPasswordInput');
+            if (emailInput) emailInput.value = '';
+            if (pwInput) pwInput.value = '';
+            if (modal) modal.classList.remove('hidden');
+            setTimeout(() => emailInput?.focus(), 50);
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function openPasswordInfoModal(email, password) {
+            lastPasswordInfo = { email, password };
+            const modal = document.getElementById('passwordInfoModal');
+            const emailEl = document.getElementById('pwInfoEmail');
+            const pwEl = document.getElementById('pwInfoPassword');
+            if (emailEl) emailEl.textContent = email;
+            if (pwEl) pwEl.textContent = password;
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closePasswordInfoModal() {
+            const modal = document.getElementById('passwordInfoModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function copyPasswordInfo() {
+            if (!lastPasswordInfo) return;
+            const text = `Kirmesteam Login\nE-Mail: ${lastPasswordInfo.email}\nPasswort: ${lastPasswordInfo.password}`;
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Zugangsdaten kopiert – kannst du jetzt weiterleiten.', 'success');
+            } catch (e) {
+                showToast('Kopieren fehlgeschlagen – bitte manuell abschreiben.', 'error');
+            }
+        }
+
+        async function loginWithEmail() {
+            const email = normalizeEmail(document.getElementById('loginEmailInput')?.value);
+            const password = String(document.getElementById('loginPasswordInput')?.value || '');
+
+            if (!email || !email.includes('@')) {
+                showToast('Bitte eine gültige E-Mail eingeben.', 'error');
+                return;
+            }
+            if (!password) {
+                showToast('Bitte das Passwort eingeben.', 'error');
+                return;
+            }
+
+            const user = await fetchUserFromCloud(email);
+            if (!user) {
+                showToast('Noch nicht freigeschaltet – bitte den Vorstand kontaktieren.', 'error');
+                return;
+            }
+            if (!user.password || user.password !== password) {
+                showToast('E-Mail oder Passwort ist falsch.', 'error');
+                return;
+            }
+
+            currentUserEmail = user.email;
+            applyRoleUI(user.role, { silent: true });
+            saveSession();
+            updateAuthHeaderUI();
+            closeLoginModal();
+            if (user.role === 'admin') subscribeUsersForAdmin();
+            showToast(user.role === 'admin' ? 'Als Vorstand angemeldet.' : 'Als Team-Mitglied angemeldet.', 'success');
+        }
+
+        function logout(opts = {}) {
+            unsubscribeUsers();
+            currentUserEmail = null;
+            applyRoleUI('gast', { silent: true });
+            localStorage.removeItem(SESSION_KEY);
+            updateAuthHeaderUI();
+            if (!opts.silent) showToast('Abgemeldet.', 'info');
+        }
+
+        /* Apply role UI (nach Login / Logout / Session-Restore) */
+        function applyRoleUI(role, opts = {}) {
             currentRole = role;
             const bannerText = document.getElementById('roleBannerText');
             
-            // Toggle Tab buttons visibility according to role
             const btnSchichten = document.getElementById('nav-schichtplan');
             const btnUmfragen = document.getElementById('nav-umfragen');
             const btnAdmin = document.getElementById('nav-admin');
             const uploadBtn = document.getElementById('uploadPhotoBtn');
 
             if (role === 'gast') {
-                bannerText.innerHTML = '<i class="fa-solid fa-user-globe mr-1"></i> Modus: Öffentlicher Gastbereich';
+                bannerText.innerHTML = '<i class="fa-solid fa-user-globe mr-1"></i> Öffentlicher Gastbereich';
                 btnSchichten.classList.add('hidden');
                 btnSchichten.classList.remove('flex');
                 btnUmfragen.classList.add('hidden');
                 btnUmfragen.classList.remove('flex');
                 btnAdmin.classList.add('hidden');
                 btnAdmin.classList.remove('flex');
-                uploadBtn.classList.add('hidden');
+                if (uploadBtn) uploadBtn.classList.add('hidden');
 
                 if (['schichtplan', 'umfragen', 'admin'].includes(currentTab)) {
                     switchTab('home');
                 }
             } else if (role === 'mitglied') {
-                bannerText.innerHTML = '<i class="fa-solid fa-id-badge mr-1 text-blue-400"></i> Modus: Kirmesteam Großenritte (Helfer)';
+                const mail = currentUserEmail ? ` · ${escapeHtml(currentUserEmail)}` : '';
+                bannerText.innerHTML = `<i class="fa-solid fa-id-badge mr-1 text-blue-400"></i> Team-Mitglied${mail}`;
                 btnSchichten.classList.remove('hidden');
                 btnSchichten.classList.add('flex');
                 btnUmfragen.classList.remove('hidden');
                 btnUmfragen.classList.add('flex');
                 btnAdmin.classList.add('hidden');
                 btnAdmin.classList.remove('flex');
-                uploadBtn.classList.remove('hidden');
+                if (uploadBtn) uploadBtn.classList.remove('hidden');
 
                 if (currentTab === 'admin') switchTab('home');
             } else if (role === 'admin') {
-                bannerText.innerHTML = '<i class="fa-solid fa-crown mr-1 text-amber-400"></i> Modus: Vorstand / Administrator';
+                const mail = currentUserEmail ? ` · ${escapeHtml(currentUserEmail)}` : '';
+                bannerText.innerHTML = `<i class="fa-solid fa-crown mr-1 text-amber-400"></i> Vorstand${mail}`;
                 btnSchichten.classList.remove('hidden');
                 btnSchichten.classList.add('flex');
                 btnUmfragen.classList.remove('hidden');
                 btnUmfragen.classList.add('flex');
                 btnAdmin.classList.remove('hidden');
                 btnAdmin.classList.add('flex');
-                uploadBtn.classList.remove('hidden');
+                if (uploadBtn) uploadBtn.classList.remove('hidden');
             }
 
-            renderAnnouncements(); // Re-render to show/hide internal news
-            showToast(`Rolle gewechselt: ${role === 'gast' ? 'Gast' : (role === 'mitglied' ? 'Team-Mitglied' : 'Vorstand')}`, 'info');
+            renderAnnouncements();
+            updateAuthHeaderUI();
+            if (!opts.silent) {
+                showToast(`Rolle: ${role === 'gast' ? 'Gast' : (role === 'mitglied' ? 'Team-Mitglied' : 'Vorstand')}`, 'info');
+            }
+        }
+
+        // Alias für Kompatibilität
+        function changeRole(role) {
+            applyRoleUI(role);
         }
 
         /* Tab Switcher */
@@ -760,14 +1266,15 @@
             list.innerHTML = shifts.map(s => {
                 const isFull = s.claimed.length >= s.needed;
                 if (!isFull) openCount++;
-                const userClaimed = s.claimed.includes("Du (Angemeldet)");
+                const me = currentUserEmail || '';
+                const userClaimed = me ? s.claimed.includes(me) : false;
 
                 return `
                     <div class="p-3 rounded-2xl bg-slate-900 border ${isFull ? 'border-slate-800 opacity-75' : 'border-blue-900/40'} space-y-2 text-xs">
                         <div class="flex items-start justify-between">
                             <div>
-                                <h4 class="font-bold text-slate-100">${s.title}</h4>
-                                <span class="text-[10px] text-blue-400 font-medium">${s.time}</span>
+                                <h4 class="font-bold text-slate-100">${escapeHtml(s.title)}</h4>
+                                <span class="text-[10px] text-blue-400 font-medium">${escapeHtml(s.time)}</span>
                             </div>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isFull ? 'bg-slate-800 text-slate-400' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}">
                                 ${s.claimed.length}/${s.needed} belegt
@@ -775,9 +1282,9 @@
                         </div>
                         
                         <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px]">
-                            <span class="text-slate-400 truncate max-w-[200px]">Helfer: ${s.claimed.length > 0 ? s.claimed.join(', ') : 'Noch niemand'}</span>
-                            <button onclick="toggleShift(${s.id})" class="px-2.5 py-1 rounded-lg font-bold text-[11px] transition shrink-0 ${userClaimed ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30' : (isFull ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white shadow')}" ${isFull && !userClaimed ? 'disabled' : ''}>
-                                ${userClaimed ? 'Austragen' : (isFull ? 'Voll' : 'Eintragen')}
+                            <span class="text-slate-400 truncate max-w-[200px]">Helfer: ${s.claimed.length > 0 ? escapeHtml(s.claimed.join(', ')) : 'Noch niemand'}</span>
+                            <button onclick="toggleShift(${s.id})" class="px-2.5 py-1 rounded-lg font-bold text-[11px] transition shrink-0 ${userClaimed ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30' : (isFull ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white shadow')}" ${(!me || (isFull && !userClaimed)) ? 'disabled' : ''}>
+                                ${!me ? 'Login nötig' : (userClaimed ? 'Austragen' : (isFull ? 'Voll' : 'Eintragen'))}
                             </button>
                         </div>
                     </div>
@@ -790,14 +1297,18 @@
         function toggleShift(id) {
             const shift = shifts.find(s => s.id === id);
             if (!shift) return;
+            if (!currentUserEmail) {
+                showToast("Bitte zuerst anmelden.", "error");
+                return;
+            }
 
-            const idx = shift.claimed.indexOf("Du (Angemeldet)");
+            const idx = shift.claimed.indexOf(currentUserEmail);
             if (idx > -1) {
                 shift.claimed.splice(idx, 1);
                 showToast("Du hast dich aus der Schicht ausgetragen.", "info");
             } else {
                 if (shift.claimed.length < shift.needed) {
-                    shift.claimed.push("Du (Angemeldet)");
+                    shift.claimed.push(currentUserEmail);
                     showToast("Erfolgreich für die Schicht eingetragen! 🎉", "success");
                 }
             }
@@ -845,31 +1356,227 @@
             renderPoll();
         }
 
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function renderPhotos() {
             const grid = document.getElementById('photoGrid');
             if (!grid) return;
 
+            if (!photos.length) {
+                grid.innerHTML = `
+                    <div class="col-span-2 rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 p-8 text-center">
+                        <i class="fa-solid fa-images text-slate-600 text-2xl mb-2"></i>
+                        <p class="text-xs text-slate-400">Noch keine Cloud-Fotos. Als Mitglied kannst du Bilder vom Handy hochladen.</p>
+                    </div>
+                `;
+                return;
+            }
+
             grid.innerHTML = photos.map(p => `
                 <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow">
-                    <img src="${p.url}" alt="Foto" class="w-full aspect-square object-cover">
+                    <img src="${escapeHtml(p.url)}" alt="Foto" class="w-full aspect-square object-cover bg-slate-900" loading="lazy">
                     <div class="p-2.5 space-y-0.5">
-                        <p class="text-[11px] font-medium text-slate-200 line-clamp-2">${p.caption}</p>
-                        <span class="text-[9px] text-purple-400 font-semibold block">von ${p.author}</span>
+                        <p class="text-[11px] font-medium text-slate-200 line-clamp-2">${escapeHtml(p.caption)}</p>
+                        <span class="text-[9px] text-purple-400 font-semibold block">von ${escapeHtml(p.author)}</span>
                     </div>
                 </div>
             `).join('');
         }
 
+        let pendingPhotoDataUrl = null;
+
         function triggerPhotoUpload() {
-            photos.unshift({
-                id: Date.now(),
-                url: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=600&q=80",
-                caption: "Kirmesstimmung pur in Großenritte! 🎉",
-                author: currentRole === 'admin' ? "Vorstand" : "Kirmesteam Großenritte"
+            if (currentRole === 'gast') {
+                showToast("Nur Mitglieder können Fotos posten.", "error");
+                return;
+            }
+            if (!isPhotoCloudReady()) {
+                showToast("Foto-Cloud noch nicht bereit (Firestore / ImgBB).", "error");
+                updateCloudStatusBanner();
+                return;
+            }
+            openPhotoUploadModal();
+        }
+
+        function setPhotoUploadLoading(loading) {
+            photoUploadInProgress = loading;
+            const confirmBtn = document.getElementById('confirmPhotoUploadBtn');
+            if (!confirmBtn) return;
+            if (loading) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Wird hochgeladen…';
+            } else {
+                confirmBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Foto veröffentlichen';
+                confirmBtn.disabled = !pendingPhotoDataUrl;
+            }
+        }
+
+        function openPhotoUploadModal() {
+            pendingPhotoDataUrl = null;
+            photoUploadInProgress = false;
+            const modal = document.getElementById('photoUploadModal');
+            const fileInput = document.getElementById('photoFileInput');
+            const captionInput = document.getElementById('photoCaptionInput');
+            const preview = document.getElementById('photoPreviewImg');
+            const placeholder = document.getElementById('photoPickPlaceholder');
+
+            if (fileInput) fileInput.value = '';
+            if (captionInput) captionInput.value = '';
+            if (preview) {
+                preview.src = '';
+                preview.classList.add('hidden');
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+            setPhotoUploadLoading(false);
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closePhotoUploadModal() {
+            if (photoUploadInProgress) return;
+            const modal = document.getElementById('photoUploadModal');
+            if (modal) modal.classList.add('hidden');
+            pendingPhotoDataUrl = null;
+        }
+
+        function onPhotoFileSelected(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast("Bitte eine Bilddatei auswählen.", "error");
+                return;
+            }
+
+            // Max ~12 MB raw file before compression
+            if (file.size > 12 * 1024 * 1024) {
+                showToast("Bild ist zu groß (max. 12 MB).", "error");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                compressImage(reader.result, 1200, 0.72)
+                    .then((dataUrl) => {
+                        pendingPhotoDataUrl = dataUrl;
+                        const preview = document.getElementById('photoPreviewImg');
+                        const placeholder = document.getElementById('photoPickPlaceholder');
+                        if (preview) {
+                            preview.src = dataUrl;
+                            preview.classList.remove('hidden');
+                        }
+                        if (placeholder) placeholder.classList.add('hidden');
+                        setPhotoUploadLoading(false);
+                    })
+                    .catch(() => {
+                        showToast("Bild konnte nicht geladen werden.", "error");
+                    });
+            };
+            reader.onerror = () => showToast("Bild konnte nicht gelesen werden.", "error");
+            reader.readAsDataURL(file);
+        }
+
+        function compressImage(dataUrl, maxSize, quality) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > maxSize || height > maxSize) {
+                        if (width >= height) {
+                            height = Math.round((height * maxSize) / width);
+                            width = maxSize;
+                        } else {
+                            width = Math.round((width * maxSize) / height);
+                            height = maxSize;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        reject(new Error('Canvas nicht verfügbar'));
+                        return;
+                    }
+                    ctx.drawImage(img, 0, 0, width, height);
+                    try {
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    } catch (e) {
+                        reject(e);
+                    }
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
             });
-            showToast("Neues Foto gepostet!", "success");
-            saveStateToCloud();
-            renderPhotos();
+        }
+
+        async function uploadToImgbb(dataUrl) {
+            const base64 = (dataUrl || '').split(',')[1];
+            if (!base64) throw new Error('Ungültiges Bild');
+
+            const form = new FormData();
+            form.append('key', IMGBB_API_KEY);
+            form.append('image', base64);
+
+            const res = await fetch('https://api.imgbb.com/1/upload', {
+                method: 'POST',
+                body: form
+            });
+            const json = await res.json();
+            if (!res.ok || !json.success) {
+                const errMsg = (json && json.error && json.error.message) ? json.error.message : 'ImgBB Upload fehlgeschlagen';
+                throw new Error(errMsg);
+            }
+            return json.data.display_url || json.data.url;
+        }
+
+        async function confirmPhotoUpload() {
+            if (photoUploadInProgress) return;
+
+            if (!pendingPhotoDataUrl) {
+                showToast("Bitte zuerst ein Foto auswählen.", "error");
+                return;
+            }
+
+            if (!isPhotoCloudReady()) {
+                showToast("Foto-Cloud noch nicht bereit (Firestore / ImgBB).", "error");
+                return;
+            }
+
+            const captionInput = document.getElementById('photoCaptionInput');
+            const caption = (captionInput?.value || '').trim() || 'Kirmesstimmung pur in Großenritte! 🎉';
+            const author = currentUserEmail
+                || (currentRole === 'admin' ? 'Vorstand' : 'Kirmesteam Großenritte');
+            const id = String(Date.now());
+
+            setPhotoUploadLoading(true);
+            try {
+                const url = await uploadToImgbb(pendingPhotoDataUrl);
+
+                await db.collection('photos').doc(id).set({
+                    id,
+                    url,
+                    caption,
+                    author,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                photoUploadInProgress = false;
+                setPhotoUploadLoading(false);
+                closePhotoUploadModal();
+                showToast("Foto in die Cloud hochgeladen!", "success");
+            } catch (e) {
+                console.error('Foto-Upload fehlgeschlagen:', e);
+                const msg = (e && e.code) ? e.code : ((e && e.message) ? e.message : 'Cloud nicht erreichbar');
+                showToast(`Upload fehlgeschlagen: ${msg}`, "error");
+                setPhotoUploadLoading(false);
+            }
         }
 
         function renderUsers() {
@@ -878,29 +1585,132 @@
             if (!list) return;
 
             if (count) count.innerText = users.length;
-            list.innerHTML = users.map((u, i) => `
-                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 text-[11px]">
-                    <span class="text-slate-300 font-mono truncate max-w-[200px]">${u.email}</span>
-                    <span class="px-2 py-0.5 rounded text-[9px] font-bold ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-blue-500/20 text-blue-300'}">
-                        ${u.role === 'admin' ? 'Vorstand' : 'Mitglied'}
-                    </span>
+            const isAdminView = currentRole === 'admin';
+
+            list.innerHTML = users.map((u) => `
+                <div class="p-2.5 rounded-lg bg-slate-950 text-[11px] space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-slate-300 font-mono truncate max-w-[180px]">${escapeHtml(u.email)}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${u.role === 'admin' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-blue-500/20 text-blue-300'}">
+                                ${u.role === 'admin' ? 'Vorstand' : 'Mitglied'}
+                            </span>
+                            ${isAdminView ? `
+                                <button onclick='regenerateUserPassword(${JSON.stringify(u.email)})' class="text-slate-500 hover:text-amber-300 px-1" title="Neues Passwort erzeugen">
+                                    <i class="fa-solid fa-key text-[10px]"></i>
+                                </button>
+                                <button onclick='removeUser(${JSON.stringify(u.email)})' class="text-slate-500 hover:text-rose-400 px-1" title="Freischaltung entfernen">
+                                    <i class="fa-solid fa-trash text-[10px]"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ${isAdminView ? `
+                        <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+                            <span class="text-[10px] text-slate-500">Passwort:</span>
+                            <button onclick='openPasswordInfoModal(${JSON.stringify(u.email)}, ${JSON.stringify(u.password || '')})' class="text-[11px] font-mono text-amber-300 hover:text-amber-200 truncate max-w-[180px]" title="Anzeigen / kopieren">
+                                ${escapeHtml(u.password || '—')}
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         }
 
-        function addUser() {
+        async function addUser() {
             const emailInput = document.getElementById('newUserEmail');
-            const email = emailInput.value.trim();
-            const role = document.getElementById('newUserRole').value;
+            const email = normalizeEmail(emailInput.value);
+            const role = document.getElementById('newUserRole').value === 'admin' ? 'admin' : 'mitglied';
             if (!email || !email.includes('@')) {
                 showToast("Bitte eine gültige E-Mail eingeben!", "error");
                 return;
             }
-            users.push({ email, role });
+
+            if (findUserByEmail(email)) {
+                showToast("Diese E-Mail ist bereits freigeschaltet.", "info");
+                return;
+            }
+
+            const password = generatePassword();
+            const record = { email, role, password };
+
+            if (db) {
+                try {
+                    await db.collection('users').doc(email).set(record);
+                    emailInput.value = '';
+                    showToast(`Rechte für ${email} freigeschaltet!`, "success");
+                    openPasswordInfoModal(email, password);
+                } catch (e) {
+                    console.error(e);
+                    showToast("Freischaltung fehlgeschlagen. Prüfe Firestore-Regeln (users).", "error");
+                }
+                return;
+            }
+
+            users.push(record);
             emailInput.value = '';
             saveStateToCloud();
             renderUsers();
             showToast(`Rechte für ${email} freigeschaltet!`, "success");
+            openPasswordInfoModal(email, password);
+        }
+
+        async function regenerateUserPassword(email) {
+            if (currentRole !== 'admin') {
+                showToast('Nur der Vorstand kann Passwörter erzeugen.', 'error');
+                return;
+            }
+            const key = normalizeEmail(email);
+            const user = findUserByEmail(key);
+            if (!user) return;
+
+            const password = generatePassword();
+            if (db) {
+                try {
+                    await db.collection('users').doc(key).set({
+                        email: key,
+                        role: user.role,
+                        password
+                    }, { merge: true });
+                    showToast('Neues Passwort erzeugt.', 'success');
+                    openPasswordInfoModal(key, password);
+                } catch (e) {
+                    console.error(e);
+                    showToast('Passwort konnte nicht gespeichert werden.', 'error');
+                }
+                return;
+            }
+
+            user.password = password;
+            saveStateToCloud();
+            renderUsers();
+            showToast('Neues Passwort erzeugt.', 'success');
+            openPasswordInfoModal(key, password);
+        }
+
+        async function removeUser(email) {
+            const key = normalizeEmail(email);
+            if (!key) return;
+            if (currentUserEmail && normalizeEmail(currentUserEmail) === key) {
+                showToast("Du kannst dich nicht selbst entfernen.", "error");
+                return;
+            }
+
+            if (db) {
+                try {
+                    await db.collection('users').doc(key).delete();
+                    showToast("Freischaltung entfernt.", "info");
+                } catch (e) {
+                    console.error(e);
+                    showToast("Entfernen fehlgeschlagen.", "error");
+                }
+                return;
+            }
+
+            users = users.filter((u) => normalizeEmail(u.email) !== key);
+            saveStateToCloud();
+            renderUsers();
+            showToast("Freischaltung entfernt.", "info");
         }
 
         function addAnnouncement() {
